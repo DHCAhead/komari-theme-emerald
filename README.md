@@ -7,7 +7,7 @@
 
 ## 使用
 
-1. 从 [Release 页面](https://github.com/Tokinx/komari-theme-emerald/releases) 下载最新的 `komari-theme-emerald-build-*.zip` 文件
+1. 从 [Release 页面](https://github.com/DHCAhead/komari-theme-emerald/releases) 下载最新的 `komari-theme-emerald-build-*.zip` 文件
 2. 登录 Komari Monitor 后，点击 `设置`，选择 `主题管理` 选项卡
 3. 点击 `上传主题` 按钮，选择下载的 `komari-theme-emerald-build-*.zip` 文件
 4. 刷新页面，即可看到新的主题

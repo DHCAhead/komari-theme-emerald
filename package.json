@@ -1,11 +1,11 @@
 {
   "name": "komari-theme-emerald",
   "type": "module",
-  "version": "0.0.26",
+  "version": "0.0.27",
   "packageManager": "bun@1.3.14",
   "author": {
     "name": "Tokinx",
-    "url": "https://github.com/Tokinx"
+    "url": "https://github.com/DHCAhead"
   },
   "license": "MIT",
   "engines": {
