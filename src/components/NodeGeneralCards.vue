@@ -2,6 +2,7 @@
 import type { NodeData } from '@/stores/nodes'
 import type { CurrencyCode } from '@/utils/financeHelper'
 import { Icon } from '@iconify/vue'
+import { onClickOutside } from '@vueuse/core'
 import { computed, onMounted, ref } from 'vue'
 import NodeEarthGlobe from '@/components/NodeEarthGlobe.vue'
 import { CardX } from '@/components/ui/card-x'
@@ -31,6 +32,15 @@ const metricSwitchTransitionProps = computed(() => ({
 }))
 
 const openFinanceCard = ref(false)
+const financeCardRef = ref<HTMLElement | null>(null)
+
+onClickOutside(financeCardRef, () => {
+  openFinanceCard.value = false
+})
+
+function toggleFinanceCard(): void {
+  openFinanceCard.value = !openFinanceCard.value
+}
 
 function getMetricSwitchStyle(index: number): Record<string, string> {
   return {
@@ -238,13 +248,14 @@ onMounted(async () => {
         </div>
       </CardX>
       <div
+        ref="financeCardRef"
         class="relative w-full h-full"
         :class="showEarth ? 'col-span-4 row-span-1 col-start-5 row-start-1' : 'col-span-1 min-h-18 md:min-h-28'"
       >
         <CardX
           hoverable
           class="group h-full bg-background/50 border-none hover:bg-background backdrop-blur-xs transition-all"
-          content-class="h-full !p-3" @click="openFinanceCard = !openFinanceCard"
+          content-class="h-full !p-3" @click="toggleFinanceCard"
         >
           <div class="flex h-full flex-col justify-between gap-1">
             <div class="flex items-start justify-between">
@@ -273,7 +284,7 @@ onMounted(async () => {
           hoverable
           class="absolute top-0 left-1/2 -translate-x-[50%] -translate-y-[25%] z-20 w-[260%] max-w-88 h-42 group bg-background/50 rounded-lg shadow-xl border-none backdrop-blur-lg transition-all ease-[cubic-bezier(0.175,0.885,0.32,1.275)]"
           :class="openFinanceCard ? 'opacity-100 scale-100  -translate-y-[5%]' : 'opacity-0 pointer-events-none scale-50'"
-          content-class="h-full !p-4" @click="openFinanceCard = false"
+          content-class="h-full !p-4"
         >
           <div class="flex h-full min-w-0 flex-col overflow-hidden">
             <div class="shrink-0 grid grid-cols-3 gap-1.5">

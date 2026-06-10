@@ -38,10 +38,10 @@ const columns: ColumnConfig[] = [
   { key: 'name', label: '节点', width: 'minmax(160px, 0.8fr)', sortable: true },
   { key: 'tags', label: '标签', width: 'minmax(200px, 1fr)', sortable: false },
   { key: 'uptime', label: '运行时间', width: '116px', sortable: true },
-  { key: 'cpu', label: 'CPU', width: '100px', sortable: false },
-  { key: 'mem', label: '内存', width: '100px', sortable: false },
-  { key: 'disk', label: '硬盘', width: '100px', sortable: false },
-  { key: 'traffic', label: '流量', width: '100px', sortable: false },
+  { key: 'cpu', label: 'CPU', width: '100px', sortable: true },
+  { key: 'mem', label: '内存', width: '100px', sortable: true },
+  { key: 'disk', label: '硬盘', width: '100px', sortable: true },
+  { key: 'traffic', label: '流量', width: '100px', sortable: true },
   { key: 'rate', label: '速率', width: '80px', sortable: true },
 ]
 
@@ -88,7 +88,7 @@ const sortedNodes = computed(() => {
       case 'cpu': return dir * ((a.cpu ?? 0) - (b.cpu ?? 0))
       case 'mem': return dir * ((a.ram ?? 0) / (a.mem_total || 1) - (b.ram ?? 0) / (b.mem_total || 1))
       case 'disk': return dir * ((a.disk ?? 0) / (a.disk_total || 1) - (b.disk ?? 0) / (b.disk_total || 1))
-      case 'traffic':
+      case 'traffic': return dir * (getTrafficUsedPercentage(a) - getTrafficUsedPercentage(b))
       case 'rate':
         return dir * (((a.net_out ?? 0) + (a.net_in ?? 0)) - ((b.net_out ?? 0) + (b.net_in ?? 0)))
       default: return 0
@@ -200,8 +200,16 @@ function getPriceTags(node: NodeData): Array<string> {
   return tags
 }
 
-function getCustomTags(node: NodeData): Array<string> {
-  return parseTags(node.tags).map(t => t.text)
+function getCustomTags(node: NodeData) {
+  return parseTags(node.tags)
+}
+
+function getTagStyle(hex: string): Record<string, string> {
+  return {
+    color: hex,
+    borderColor: `${hex}45`,
+    backgroundColor: `${hex}14`,
+  }
 }
 </script>
 
@@ -272,9 +280,10 @@ function getCustomTags(node: NodeData): Array<string> {
                 <div class="flex flex-wrap gap-1 items-center">
                   <Badge
                     v-for="(tag, tagIndex) in getCustomTags(node)" :key="tagIndex" variant="outline"
-                    class="!text-[11px] rounded text-muted-foreground border-muted-foreground/10 px-1.5"
+                    class="!text-[11px] rounded px-1.5"
+                    :style="getTagStyle(tag.hex)"
                   >
-                    {{ tag }}
+                    {{ tag.text }}
                   </Badge>
                 </div>
               </div>

@@ -13,8 +13,11 @@ import { cutPeakValues, interpolateNullsLinear } from '@/utils/recordHelper'
 import { getSharedRpc } from '@/utils/rpc'
 import '@/utils/echarts' // 共享 ECharts 配置
 
+type PingChartInitialMetric = 'latency' | 'loss'
+
 const props = defineProps<{
   uuid: string
+  initialMetric?: PingChartInitialMetric
 }>()
 
 const appStore = useAppStore()
@@ -142,9 +145,14 @@ const error = ref<string | null>(null)
 // 任务选择
 const selectedTaskIds = ref<number[]>([])
 const cutPeak = ref(false)
-const showDelay = ref(true)
-const showLoss = ref(true)
+const showDelay = ref(props.initialMetric !== 'loss')
+const showLoss = ref(props.initialMetric !== 'latency')
 const chartMargin = { top: 30, right: 24, bottom: 52, left: 56 }
+
+function applyInitialMetric(metric: PingChartInitialMetric | undefined) {
+  showDelay.value = metric !== 'loss'
+  showLoss.value = metric !== 'latency'
+}
 
 const mergeToleranceMs = computed(() => {
   const taskIntervals = tasks.value
@@ -566,6 +574,10 @@ watch(() => props.uuid, () => {
   tasks.value = []
   selectedTaskIds.value = []
   fetchRecords()
+})
+
+watch(() => props.initialMetric, (metric) => {
+  applyInitialMetric(metric)
 })
 
 onMounted(() => {

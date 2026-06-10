@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { NodeData } from '@/stores/nodes'
 import { Icon } from '@iconify/vue'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import NodePingDialog from '@/components/NodePingDialog.vue'
 import { Badge } from '@/components/ui/badge'
 import { CardX } from '@/components/ui/card-x'
 import { DataTooltip } from '@/components/ui/data-tooltip'
@@ -17,7 +18,11 @@ const props = defineProps<{ node: NodeData }>()
 
 const emit = defineEmits<{ click: [] }>()
 
+type NodePingDialogMetric = 'latency' | 'loss'
+
 const appStore = useAppStore()
+const pingDialogOpen = ref(false)
+const pingDialogMetric = ref<NodePingDialogMetric>('latency')
 
 const formatBytes = (bytes: number) => formatBytesWithConfig(bytes, appStore.byteDecimals)
 const formatBytesPerSecond = (bytes: number) => formatBytesPerSecondWithConfig(bytes, appStore.byteDecimals)
@@ -95,10 +100,23 @@ const priceTags = computed(() => {
   return tags
 })
 
-const customTags = computed(() => parseTags(props.node.tags).map(t => t.text))
+const customTags = computed(() => parseTags(props.node.tags))
+
+function getTagStyle(hex: string): Record<string, string> {
+  return {
+    color: hex,
+    borderColor: `${hex}45`,
+    backgroundColor: `${hex}14`,
+  }
+}
 
 function hasRegion(region: string | null | undefined): boolean {
   return Boolean(region?.trim())
+}
+
+function openPingDialog(metric: NodePingDialogMetric) {
+  pingDialogMetric.value = metric
+  pingDialogOpen.value = true
 }
 </script>
 
@@ -270,15 +288,21 @@ function hasRegion(region: string | null | undefined): boolean {
           </div> -->
           <!-- 延迟 -->
           <div
-            class="group/panel relative col-span-3 flex flex-col gap-1.5 p-1.5 h-10 rounded-sm bg-slate-500/5"
+            role="button"
+            tabindex="0"
+            :aria-label="`查看 ${props.node.name} 延迟记录`"
+            class="group/panel relative col-span-3 flex h-10 cursor-pointer flex-col gap-1.5 rounded-sm bg-slate-500/5 p-1.5 transition-colors hover:bg-slate-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
             :class="[!props.node.online ? 'blur-xs opacity-60' : '']" :title="latencyPanelTooltip"
+            @click.stop="openPingDialog('latency')"
+            @keydown.enter.stop.prevent="openPingDialog('latency')"
+            @keydown.space.stop.prevent="openPingDialog('latency')"
           >
             <div class="flex items-center justify-between gap-2 text-[11px] leading-none relative">
               <span class="text-muted-foreground">延迟</span>
               <span class="font-medium text-foreground/85">{{ latencyDisplay }}</span>
             </div>
             <div
-              class="grid h-full items-end gap-[1px] opacity-80 group-hover/panel:opacity-100 cursor-auto"
+              class="grid h-full cursor-pointer items-end gap-[1px] opacity-80 group-hover/panel:opacity-100"
               :style="{ gridTemplateColumns: `repeat(${latencyRenderBars.length}, minmax(0, 1fr))` }"
             >
               <DataTooltip v-for="bar in latencyRenderBars" :key="bar.key" placement="top" :content="bar.tooltip" class="h-full w-full">
@@ -291,15 +315,21 @@ function hasRegion(region: string | null | undefined): boolean {
           </div>
           <!-- 丢包 -->
           <div
-            class="group/panel relative col-span-3 flex flex-col gap-1.5 p-1.5 h-10 rounded-sm bg-slate-500/5"
+            role="button"
+            tabindex="0"
+            :aria-label="`查看 ${props.node.name} 丢包记录`"
+            class="group/panel relative col-span-3 flex h-10 cursor-pointer flex-col gap-1.5 rounded-sm bg-slate-500/5 p-1.5 transition-colors hover:bg-slate-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
             :class="[!props.node.online ? 'blur-xs opacity-60' : '']" :title="lossPanelTooltip"
+            @click.stop="openPingDialog('loss')"
+            @keydown.enter.stop.prevent="openPingDialog('loss')"
+            @keydown.space.stop.prevent="openPingDialog('loss')"
           >
             <div class="flex items-center justify-between gap-2 text-[11px] leading-none">
               <span class="text-muted-foreground">丢包</span>
               <span class="font-medium text-foreground/85">{{ lossDisplay }}</span>
             </div>
             <div
-              class="grid h-full items-end gap-[1px] opacity-80 group-hover/panel:opacity-100 cursor-auto"
+              class="grid h-full cursor-pointer items-end gap-[1px] opacity-80 group-hover/panel:opacity-100"
               :style="{ gridTemplateColumns: `repeat(${lossRenderBars.length}, minmax(0, 1fr))` }"
             >
               <DataTooltip v-for="bar in lossRenderBars" :key="bar.key" placement="top" :content="bar.tooltip" class="h-full w-full">
@@ -314,14 +344,21 @@ function hasRegion(region: string | null | undefined): boolean {
         <div v-if="customTags.length > 0" class="flex shrink-0 flex-wrap gap-1 items-center">
           <Badge
             v-for="(tag, index) in customTags" :key="index" variant="outline"
-            class="!text-[11px] rounded text-muted-foreground border-muted-foreground/10 px-1.5"
+            class="!text-[11px] rounded px-1.5"
+            :style="getTagStyle(tag.hex)"
           >
-            {{ tag }}
+            {{ tag.text }}
           </Badge>
         </div>
       </div>
     </template>
   </CardX>
+  <NodePingDialog
+    v-model:open="pingDialogOpen"
+    :uuid="props.node.uuid"
+    :node-name="props.node.name"
+    :metric="pingDialogMetric"
+  />
 </template>
 
 <style scoped>

@@ -10,6 +10,8 @@ import {
 } from '@vueuse/core'
 import createGlobe from 'cobe'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { Button } from '@/components/ui/button'
+import { DataTooltip } from '@/components/ui/data-tooltip'
 import { useAppStore } from '@/stores/app'
 import { useNodesStore } from '@/stores/nodes'
 import { getCoordByCode, getCountryCodeFromRegion } from '@/utils/geoHelper'
@@ -61,7 +63,7 @@ function clampTheta(value: number): number {
   return Math.min(Math.max(value, MIN_THETA), MAX_THETA)
 }
 
-function resetStoppedView() {
+function resetInitialView() {
   phi = DEFAULT_PHI
   targetPhi = DEFAULT_PHI
   theta = INITIAL_THETA
@@ -122,6 +124,12 @@ const regionClusters = computed<RegionCluster[]>(() => {
   }
   return Array.from(map.values()).sort((a, b) => b.servers - a.servers)
 })
+
+function resetEarthView() {
+  resetInitialView()
+  triggerStaticRedrawWindow()
+  updateGlobeFrame(true)
+}
 
 interface RegionRate {
   up: number
@@ -401,7 +409,7 @@ function startGlobe() {
   if (!canvasRef.value)
     return
   if (appStore.stopEarth) {
-    resetStoppedView()
+    resetInitialView()
     triggerStaticRedrawWindow()
   }
   globe = createGlobe(canvasRef.value, buildInitialOptions())
@@ -472,7 +480,7 @@ watch(
   () => appStore.stopEarth,
   (stopped) => {
     if (stopped)
-      resetStoppedView()
+      resetInitialView()
     triggerStaticRedrawWindow()
     updateGlobeFrame(true)
   },
@@ -552,6 +560,24 @@ function formatRate(bytesPerSec: number): string {
       class="earth-globe-canvas absolute inset-0 w-full h-full select-none touch-none cursor-grab active:cursor-grabbing"
       @pointerdown="onPointerDown" @pointermove="onPointerMove" @pointerup="onPointerUp" @pointercancel="onPointerUp"
     />
+
+    <DataTooltip
+      placement="left"
+      content="复位视角"
+      class="absolute right-0 top-6 z-20 md:top-12"
+      content-class="whitespace-nowrap px-2 py-1"
+    >
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        class="size-7 rounded-md border-none bg-background/60 text-muted-foreground shadow-none backdrop-blur-lg hover:bg-background/80 hover:text-foreground"
+        aria-label="复位地球视角"
+        @pointerdown.stop
+        @click.stop="resetEarthView"
+      >
+        <Icon icon="tabler:refresh" :width="14" :height="14" />
+      </Button>
+    </DataTooltip>
 
     <template v-for="cluster in regionClusters" :key="cluster.code">
       <Teleport :to="getAnchorEl(cluster.code) ?? containerRef!" :disabled="!getAnchorEl(cluster.code)">
