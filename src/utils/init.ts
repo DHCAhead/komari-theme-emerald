@@ -45,6 +45,10 @@ class InitManager {
     this.nodesStore = useNodesStore()
   }
 
+  private updateLoadingProgress(progress: number): void {
+    this.appStore.loadingProgress = Math.min(Math.max(progress, 0), 100)
+  }
+
   /**
    * 获取轮询间隔（毫秒）
    * 从 publicSettings.theme_settings.dataUpdateInterval 读取，默认 3 秒
@@ -69,19 +73,26 @@ class InitManager {
     }
 
     try {
+      this.updateLoadingProgress(4)
+
       // 1. 测试后端服务是否正常
       await this.healthCheck()
+      this.updateLoadingProgress(18)
 
       // 2. 获取服务端公开属性
       await this.fetchPublicSettings()
+      this.updateLoadingProgress(38)
 
       // 3. 获取用户信息
       await this.fetchUserInfo()
+      this.updateLoadingProgress(56)
 
       // 4. 获取节点信息和最新状态
       await this.fetchNodesData()
+      this.updateLoadingProgress(92)
 
       // 5. 解除加载状态
+      this.updateLoadingProgress(100)
       this.appStore.loading = false
 
       // 6. 建立 WebSocket 连接并开始轮询
@@ -92,6 +103,7 @@ class InitManager {
     catch (error) {
       console.error('[InitManager] Initialization failed:', error)
       // 即使失败也解除加载状态，显示错误页面
+      this.updateLoadingProgress(100)
       this.appStore.loading = false
       throw error
     }
@@ -111,6 +123,7 @@ class InitManager {
       if (error instanceof RpcError && error.code === 401) {
         console.warn('[InitManager] Private site detected, redirecting to /admin')
         this.appStore.updateLoginState(false)
+        this.updateLoadingProgress(100)
         this.appStore.loading = false
         location.href = '/admin'
         return

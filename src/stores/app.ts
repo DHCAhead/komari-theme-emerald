@@ -24,6 +24,7 @@ function isValidThemeMode(value: unknown): value is ThemeMode {
 
 const useAppStore = defineStore('app', () => {
   const loading = ref<boolean>(true)
+  const loadingProgress = ref<number>(0)
 
   // 使用 VueUse 的 useStorageAsync 实现自动持久化
   const themeMode = useStorageAsync<ThemeMode>('themeMode', 'auto', localStorage)
@@ -317,6 +318,7 @@ const useAppStore = defineStore('app', () => {
 
   return {
     loading,
+    loadingProgress,
     themeMode,
     isDark,
     resolvedThemeMode,
